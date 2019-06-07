@@ -50,7 +50,7 @@ endif
 
 export COMPOSE_PROJECT_NAME
 
-.PHONY: benchmark
+.PHONY: benchmark lua_modules
 
 test: ## Run all tests
 	$(MAKE) --keep-going busted prove builder-image test-builder-image prove-docker runtime-image test-runtime-image
@@ -99,7 +99,7 @@ split-tests = $(shell echo $(1) | xargs -n 1 echo | circleci tests split --split
 BUSTED_PATTERN = "{spec,examples}/**/*_spec.lua"
 BUSTED_FILES ?= $(call circleci, $(BUSTED_PATTERN))
 busted: $(ROVER) lua_modules ## Test Lua.
-	$(ROVER) exec bin/busted $(BUSTED_FILES)
+	$(ROVER) exec bin/busted $(BUSTED_FILES) $(BUSTED_ARGS)
 ifeq ($(CI),true)
 	@- luacov
 endif
@@ -200,7 +200,7 @@ stop-development: ## Stop development environment
 rover: $(ROVER)
 	@echo $(ROVER)
 
-$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile
+$(S2I_CONTEXT)/Roverfile.lock : $(S2I_CONTEXT)/Roverfile $(S2I_CONTEXT)/apicast-scm-1.rockspec
 	$(ROVER) lock --roverfile=$(S2I_CONTEXT)/Roverfile
 
 lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
@@ -209,7 +209,7 @@ lua_modules: $(ROVER) $(S2I_CONTEXT)/Roverfile.lock
 lua_modules/bin/rover:
 	@LUAROCKS_CONFIG=$(S2I_CONTEXT)/config-5.1.lua luarocks install --server=http://luarocks.org/dev lua-rover --tree=lua_modules 1>&2
 
-dependencies: lua_modules carton
+dependencies: lua_modules carton  ## Install project dependencies
 
 clean-containers: apicast-source
 	$(DOCKER_COMPOSE) down --volumes
