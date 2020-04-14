@@ -1,10 +1,127 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/) 
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
+
+### Fixed
+
+### Added
+
+- Added Rate-limit headers policy [THREESCALE-3795](https://issues.jboss.org/browse/THREESCALE-3795) [PR #1166](https://github.com/3scale/APIcast/pull/1166)
+- Added Content-caching policy [THREESCALE-2894](https://issues.jboss.org/browse/THREESCALE-2894) [PR #1182](https://github.com/3scale/APIcast/pull/1182)
+
+- Added Nginx request_id variable to context [PR #1184](https://github.com/3scale/APIcast/pull/1184)
+
+## [3.8.0] - 2020-03-24
+
+`3.8.0-cr1` was considered final and became `3.8.0`.
+
+## [3.8.0-cr1] - 2020-03-07
+
+### Fixed
+- Fixed naming issues in policies [THREESCALE-4150](https://issues.jboss.org/browse/THREESCALE-4150) [PR #1167](https://github.com/3scale/APIcast/pull/1167)
+- Fixed issues on invalid config in logging policy [THREESCALE-4605](https://issues.jboss.org/browse/THREESCALE-4605) [PR #1168](https://github.com/3scale/APIcast/pull/1168)
+- Fixed issues with routing policy and GRPC one [THREESCALE-4684](https://issues.jboss.org/browse/THREESCALE-4684) [PR #1177](https://github.com/3scale/APIcast/pull/1177) [PR #1179](https://github.com/3scale/APIcast/pull/1179)
+
+## [3.8.0-alpha2] - 2020-02-18
+
+### Fixed
+- Check status is bigger than zero on caching policy [THREESCALE-4471](https://issues.jboss.org/browse/THREESCALE-4471) [PR #1163](https://github.com/3scale/APIcast/pull/1163)
+
+
+## [3.8.0-alpha1] - 2020-01-31
+
+### Added
+
+- Now the configuration of the issuer is cached to avoid flip-flop issues when OIDC connectivity fails. [THREESCALE-3809](https://issues.jboss.org/browse/THREESCALE-3809) [PR #1141](https://github.com/3scale/APIcast/pull/1141)
+- Openresty dependencies comes now from RedHat build system. [THREESCALE-3771](https://issues.jboss.org/browse/THREESCALE-3771) [PR #1145](https://github.com/3scale/APIcast/pull/1145)
+- Added HTTP2 support [THREESCALE-3271](https://issues.jboss.org/browse/THREESCALE-3271) [PR #1128](https://github.com/3scale/APIcast/pull/1128)
+- Websocket support. [THREESCALE-4019](https://issues.jboss.org/browse/THREESCALE-4019) [PR #1152](https://github.com/3scale/APIcast/pull/1152)
+- Added Request_id on ngx.log function. [THREESCALE-3644](https://issues.jboss.org/browse/THREESCALE-3644) [PR #1156](https://github.com/3scale/APIcast/pull/1156)
+- Logging policy add the option to log JWT claims [THREESCALE-4326](https://issues.jboss.org/browse/THREESCALE-4326) [PR #1160](https://github.com/3scale/APIcast/pull/1160)
+
+
+### Fixed
+
+- When PATH routing was enabled the URL was not correctly escaped [THREESCALE-3468](https://issues.jboss.org/browse/THREESCALE-3468) [PR #1150](https://github.com/3scale/APIcast/pull/1150)
+- Add the correct host header when using an http proxy [THREESCALE-4178](https://issues.jboss.org/browse/THREESCALE-4178) [PR #1143](https://github.com/3scale/APIcast/pull/1143)
+- Normalize policy names capitalization [THREESCALE-4150](https://issues.jboss.org/browse/THREESCALE-4150) [PR #1154](https://github.com/3scale/APIcast/pull/1154)
+- Fix issues with non-alphanumeric variables in liquid [THREESCALE-3968](https://issues.jboss.org/browse/THREESCALE-3968) [PR #1158](https://github.com/3scale/APIcast/pull/1158)
+- Fix issues with double mapping rules [THREESCALE-3950](https://issues.jboss.org/browse/THREESCALE-3950) [PR #1159](https://github.com/3scale/APIcast/pull/1159)
+
+
+## [3.7.0] - 2019-11-27
+
+`3.7.0-rc2` was considered final and became `3.7.0`.
+
+## [3.7.0-cr2]- 2019-11-07
+
+- Fix exception if api_backend is null [THREESCALE-3869](https://issues.jboss.org/browse/THREESCALE-3869) [PR #1136](https://github.com/3scale/APIcast/pull/1136)
+
+## [3.7.0-cr1]- 2019-11-04
+
+### Added
+
+- Fix issues when TLS is enabled in Lazy mode [#1135](https://github.com/3scale/APIcast/pull/1135), [THREESCALE-3713](https://issues.jboss.org/browse/THREESCALE-3713)
+- Return 404 back if the upstream is not defined [THREESCALE-3775](https://issues.jboss.org/browse/THREESCALE-3775) [PR #1129](https://github.com/3scale/APIcast/pull/1129)
+
+## [3.7.0-beta2]- 2019-10-16
+
+### Added
+
+- Added usage metrics to the Logging policy [PR #1126](https://github.com/3scale/APIcast/pull/1126), [THREESCALE-1234](https://issues.jboss.org/browse/THREESCALE-1234)
+- Added `owner_id` to mapping rule and Routing policy [THREESCALE-3623](https://issues.jboss.org/browse/THREESCALE-3623) [PR #1125](https://github.com/3scale/APIcast/pull/1125)
+
+### Fixed
+
+- Fix issues with escaped characters in URI [THREESCALE-3468](https://issues.jboss.org/browse/THREESCALE-3468) [PR #1123](https://github.com/3scale/APIcast/pull/1123)
+
+
+## [3.7.0-beta1]- 2019-09-13
+
+### Added
+
+- Introduce possibility of specifying policy order restrictions in their schemas. APIcast now shows a warning when those restrictions are not respected [#1088](https://github.com/3scale/APIcast/pull/1088), [THREESCALE-2896](https://issues.jboss.org/browse/THREESCALE-2896)
+- Added new parameters to logging policy to allow custom access log [PR #1089](https://github.com/3scale/APIcast/pull/1089), [THREESCALE-1234](https://issues.jboss.org/browse/THREESCALE-1234)[THREESCALE-2876](https://issues.jboss.org/browse/THREESCALE-2876), [PR #1116] (https://github.com/3scale/APIcast/pull/1116)
+- Added http_proxy policy to use an HTTP proxy in api_backed calls. [THREESCALE-2696](https://issues.jboss.org/browse/THREESCALE-2696), [PR #1080](https://github.com/3scale/APIcast/pull/1080)
+- Option to load service configurations one by one lazily [PR #1099](https://github.com/3scale/APIcast/pull/1099), [THREESCALE-3168](https://issues.jboss.org/browse/THREESCALE-3168)
+- New maintenance mode policy, useful for maintenance periods. [PR #1105](https://github.com/3scale/APIcast/pull/1105), [THREESCALE-3189](https://issues.jboss.org/browse/THREESCALE-3189)
+- Remove dnsmasq process for APIcast [PR #1090](https://github.com/3scale/APIcast/pull/1090), [THREESCALE-1555](https://issues.jboss.org/browse/THREESCALE-1555)
+- Enable liquid operations and original request variable on routing policy [PR #1103](https://github.com/3scale/APIcast/pull/1103) [THREESCALE-3239](https://issues.jboss.org/browse/THREESCALE-3239)
+- Allow to use capture function in liquid templates. [PR #1107](https://github.com/3scale/APIcast/pull/1107), [THREESCALE-1911](https://issues.jboss.org/browse/THREESCALE-1911)
+- OAuth 2.0 MTLS policy [PR #1101](https://github.com/3scale/APIcast/pull/1101) [Issue #1003](https://github.com/3scale/APIcast/issues/1003)
+- Add an option to enable keepalive_timeout on gateway [THREESCALE-2886](https://issues.jboss.org/browse/THREESCALE-2886) [PR #1106](https://github.com/3scale/APIcast/pull/1106)
+- Added a new replace path option in routing policy [THREESCALE-3512](https://issues.jboss.org/browse/THREESCALE-3512) [PR #1119](https://github.com/3scale/APIcast/pull/1119) [PR #1121](https://github.com/3scale/APIcast/pull/1121) [PR #1122](https://github.com/3scale/APIcast/pull/1122)
+
+### Fixed
+
+- Fix issues when OPENTRACING_FORWARD_HEADER was set [PR #1109](https://github.com/3scale/APIcast/pull/1109), [THREESCALE-1660](https://issues.jboss.org/browse/THREESCALE-1660)
+- New TLS termination policy [PR #1108](https://github.com/3scale/APIcast/pull/1108), [THREESCALE-2898](https://issues.jboss.org/browse/THREESCALE-2898)
+- Fix exception on rate limit policy when window was set as 0. [PR #1113](https://github.com/3scale/APIcast/pull/1108), [THREESCALE-3382](https://issues.jboss.org/browse/THREESCALE-3382)
+- Fix issues with escaped characters in uri [THREESCALE-3468](https://issues.jboss.org/browse/THREESCALE-3468) [PR #1123](https://github.com/3scale/APIcast/pull/1123)
+
+## [3.6.0] - 2019-08-30
+
+`3.6.0-rc2` was considered final and became `3.6.0`.
+
+## [3.6.0-rc2] - 2019-07-25
+
+### Fixed
+
+- Fix typos on JWT claim policy jsonschema [PR #1095](https://github.com/3scale/APIcast/pull/1095), [THREESCALE-3046](https://issues.jboss.org/browse/THREESCALE-3046)
+
+## [3.6.0-rc1] - 2019-07-04
+
+### Added
+
+- Extended variables in Liquid template operations [PR #1081](https://github.com/3scale/APIcast/pull/1081), [THREESCALE-2927](https://issues.jboss.org/browse/THREESCALE-2927)
+
+
+## [3.6.0-beta1] - 2019-06-18
 
 ### Added
 
@@ -18,6 +135,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Upgrade OpenResty to 1.15.8.1 release.[PR #1049](https://github.com/3scale/APIcast/pull/1049), [THREESCALE-2200](https://issues.jboss.org/browse/THREESCALE-2200)
 - Now it is possible to report status codes when using reporting threads [PR #1058](https://github.com/3scale/APIcast/pull/1058), [THREESCALE-2340](https://issues.jboss.org/browse/THREESCALE-2340)
 - New Retry policy. Allows to configure retries for calls to the upstream APIs [PR #1057](https://github.com/3scale/APIcast/pull/1057), [THREESCALE-1517](https://issues.jboss.org/browse/THREESCALE-1517)
+- JWT claim policy. Allows to allow/deny traffic based on JWT claim constraint [PR #1070](https://github.com/3scale/APIcast/pull/1070), [THREESCALE-2265](https://issues.jboss.org/browse/THREESCALE-2265)
 
 ### Fixed
 
@@ -28,6 +146,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed the schema of the IP check policy so it renders correctly in the UI [PR #1026](https://github.com/3scale/APIcast/pull/1026), [THREESCALE-1692](https://issues.jboss.org/browse/THREESCALE-1692)
 - Allow uppercase backend API in the service.[PR #1044](https://github.com/3scale/APIcast/pull/1044), [THREESCALE-2540](https://issues.jboss.org/browse/THREESCALE-2540)
 - Fixed lock issues on configuration loader when Lazy mode is enabled.[PR #1050](https://github.com/3scale/APIcast/pull/1050), [THREESCALE-2194](https://issues.jboss.org/browse/THREESCALE-2194)
+- Fixed multiple x-forwarded-for headers issue on IP Check policy.[PR #1065](https://github.com/3scale/APIcast/pull/1065), [Issue #1061](https://github.com/3scale/APIcast/issues/1061)[THREESCALE-2775](https://issues.jboss.org/browse/THREESCALE-2775)
+- APIcast now returns "Auth failed" instead of "Limits Exceeded" for disabled metrics [PR #1066](https://github.com/3scale/APIcast/pull/1066), [THREESCALE-2755](https://issues.jboss.org/browse/THREESCALE-2755)
 
 ### Removed
 
@@ -92,7 +212,7 @@ Apart from the changes mentioned in this section, this version also includes the
 
 ## [3.4.0-rc2] - 2018-11-16
 
-### Fixed 
+### Fixed
 
 - Fix bug in the Default credentials policy. It was using the default credentials in some cases where it should not [PR #954](https://github.com/3scale/apicast/pull/954), [THREESCALE-1547](https://issues.jboss.org/browse/THREESCALE-1547)
 
@@ -184,7 +304,7 @@ expressed might change in future releases.
 - Default credentials policy [PR #741](https://github.com/3scale/apicast/pull/741), [THREESCALE-586](https://issues.jboss.org/browse/THREESCALE-586)
 - Configurable caching for the token introspection policy [PR #656](https://github.com/3scale/apicast/pull/656)
 - `APICAST_ACCESS_LOG_FILE` env to make the access log location configurable [PR #743](https://github.com/3scale/apicast/pull/743), [THREESCALE-1148](https://issues.jboss.org/browse/THREESCALE-1148)
-- ENV variables to make APIcast listen on HTTPS port [PR #622](https://github.com/3scale/apicast/pull/622) 
+- ENV variables to make APIcast listen on HTTPS port [PR #622](https://github.com/3scale/apicast/pull/622)
 - New `ssl_certificate` phase allows policies to provide certificate to terminate HTTPS connection [PR #622](https://github.com/3scale/apicast/pull/622)
 - Configurable `auth_type` for the token introspection policy [PR #755](https://github.com/3scale/apicast/pull/755)
 - `TimerTask` module to execute recurrent tasks that can be cancelled [PR #782](https://github.com/3scale/apicast/pull/782), [PR #784](https://github.com/3scale/apicast/pull/784), [PR #791](https://github.com/3scale/apicast/pull/791)
@@ -496,7 +616,7 @@ expressed might change in future releases.
 
 ### Changed
 
-- Bump OpenResty version to [1.11.2.3](https://github.com/3scale/s2i-openresty/releases/tag/1.11.2.3-1) [PR #359](https://github.com/3scale/apicast/pull/359) 
+- Bump OpenResty version to [1.11.2.3](https://github.com/3scale/s2i-openresty/releases/tag/1.11.2.3-1) [PR #359](https://github.com/3scale/apicast/pull/359)
 - Upgraded lua-resty-http and lua-resty-jwt [PR #361](https://github.com/3scale/apicast/pull/361)
 
 ### Added
@@ -636,7 +756,7 @@ expressed might change in future releases.
 ### Changed
 - Major rewrite using JSON configuration instead of code generation.
 
-[Unreleased]: https://github.com/3scale/apicast/compare/v3.5.1...HEAD
+[Unreleased]: https://github.com/3scale/apicast/compare/v3.8.0...HEAD
 [2.0.0]: https://github.com/3scale/apicast/compare/v0.2...v2.0.0
 [3.0.0-alpha1]: https://github.com/3scale/apicast/compare/v2.0.0...v3.0.0-alpha1
 [3.0.0-alpha2]: https://github.com/3scale/apicast/compare/v3.0.0-alpha1...v3.0.0-alpha2
@@ -672,3 +792,15 @@ expressed might change in future releases.
 [3.5.0-rc1]: https://github.com/3scale/apicast/compare/v3.5.0-beta1...v3.5.0-rc1
 [3.5.0]: https://github.com/3scale/apicast/compare/v3.5.0-beta1...v3.5.0
 [3.5.1]: https://github.com/3scale/apicast/compare/v3.5.0...v3.5.1
+[3.6.0-beta1]: https://github.com/3scale/apicast/compare/v3.5.1...v3.6.0-beta1
+[3.6.0-rc1]: https://github.com/3scale/apicast/compare/v3.6.0-beta1...v3.6.0-rc1
+[3.6.0-rc2]: https://github.com/3scale/apicast/compare/v3.6.0-rc1...v3.6.0-rc2
+[3.6.0]: https://github.com/3scale/apicast/compare/v3.6.0-rc2...v3.6.0
+[3.7.0-beta1]: https://github.com/3scale/apicast/compare/v3.6.0...v3.7.0-beta1
+[3.7.0-beta2]: https://github.com/3scale/apicast/compare/v3.7.0-beta1...v3.7.0-beta2
+[3.7.0-cr1]: https://github.com/3scale/apicast/compare/v3.7.0-beta2...v3.7.0-cr1
+[3.7.0-cr2]: https://github.com/3scale/apicast/compare/v3.7.0-cr1...v3.7.0-cr2
+[3.7.0]: https://github.com/3scale/apicast/compare/v3.7.0-cr2...v3.7.0
+[3.8.0-alpha1]: https://github.com/3scale/apicast/compare/v3.7.0...v3.8.0-alpha1
+[3.8.0-alpha2]: https://github.com/3scale/apicast/compare/v3.8.0-alpha1...v3.8.0-alpha2
+[3.8.0-cr1]: https://github.com/3scale/apicast/compare/v3.8.0-alpha2...v3.8.0-cr1

@@ -13,6 +13,11 @@ local re_match = ngx.re.match
 local insert = table.insert
 local re_gsub = ngx.re.gsub
 
+-- This is introduced by API as a product feature. There are two kinds of
+-- mapping rules owner: `BackendAPI` that means that is used by API as a
+-- product and `Proxy` that means that it's a normal mapping rule.
+local BackendAPIconst = "BackendApi"
+
 local _M = {
   any_method = "ANY"
 }
@@ -30,6 +35,11 @@ local function hash_to_array(hash)
 end
 
 local function regexpify(pattern)
+  -- some urls in APIAP uses double / that it's a valid url, but ngx.var.uri
+  -- eliminates the duplicates, so mapping rule needs to remove the duplicates
+  -- ones.
+  pattern = re_gsub(pattern,[[\/\/+]], '/', 'oj')
+
   pattern = re_gsub(pattern, [[\?.*]], '', 'oj')
   -- dollar sign is escaped by another $, see https://github.com/openresty/lua-nginx-module#ngxresub
   pattern = re_gsub(pattern, [[\{.+?\}]], [[([\w-.~%!$$&'()*+,;=@:]+)]], 'oj')
@@ -79,7 +89,7 @@ local function matches_uri(rule_pattern, uri)
   return re_match(uri, format("^%s", rule_pattern), 'oj')
 end
 
-local function new(http_method, pattern, params, querystring_params, metric, delta, last)
+local function new(http_method, pattern, params, querystring_params, metric, delta, last, owner_id, owner_type)
   local self = setmetatable({}, mt)
 
   local querystring_parameters = hash_to_array(querystring_params)
@@ -91,6 +101,11 @@ local function new(http_method, pattern, params, querystring_params, metric, del
   self.system_name = metric or error('missing metric name of rule')
   self.delta = delta
   self.last = last or false
+
+  if owner_type == BackendAPIconst then
+    self.owner_id = owner_id
+  end
+
 
   self.querystring_params = function(args)
     return matches_querystring_params(querystring_parameters, args)
@@ -123,7 +138,9 @@ function _M.from_proxy_rule(proxy_rule)
     proxy_rule.querystring_parameters,
     proxy_rule.metric_system_name,
     proxy_rule.delta,
-    proxy_rule.last
+    proxy_rule.last,
+    tonumber(proxy_rule.owner_id),
+    proxy_rule.owner_type
   )
 end
 

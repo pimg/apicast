@@ -109,12 +109,12 @@ executors:
     environment:
       S2I_VERSION: "1.1.12-2a783420"
       DOCKER_COMPOSE_VERSION: "1.16.1"
-      OPENRESTY_VERSION: "1.15.8.1-0"
+      OPENRESTY_VERSION: "1.17.4.1-0-centos8"
 
   openresty:
     working_directory: /opt/app-root/apicast
     docker:
-    - image: quay.io/3scale/s2i-openresty-centos7:1.15.8.1-0
+    - image: quay.io/3scale/s2i-openresty-centos7:1.17.4.1-0-centos8
     - image: redis:3.2.8-alpine
     environment:
       TEST_NGINX_BINARY: openresty
@@ -332,8 +332,10 @@ workflows:
           requires:
             - build-lua
             - build-perl
-      - profile:
-          <<: *build-tags
-          requires:
-            - build-lua
-            - build-perl
+## Commented until we figure out why on many runs there are only a few requests
+## using luaJIT traces: https://github.com/3scale/APIcast/issues/1096
+#      - profile:
+#          <<: *build-tags
+#          requires:
+#            - build-lua
+#            - build-perl

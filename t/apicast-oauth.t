@@ -365,7 +365,7 @@ GET /t
             credentials_location = "query",
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta=1}
             }
           }
         }
@@ -444,7 +444,7 @@ Location: http://example.com/redirect\?code=\w+&state=12345
             credentials_location = "headers",
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
             }
           }
         }
@@ -489,7 +489,7 @@ yay, upstream
             error_auth_missing = 'credentials missing!',
             error_status_auth_missing = 401,
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
             }
           }
         }
@@ -522,7 +522,7 @@ credentials missing!
             error_auth_missing = 'credentials missing!',
             error_status_auth_missing = 401,
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1}
             }
           }
         }
@@ -726,8 +726,8 @@ GET /t
           ngx.log(ngx.ERR, 'Backend did not receive the correct TTL.')
           ngx.exit(400)
         end
-
-        if ngx.var.http_content_type then
+        local headers = ngx.req.get_headers()
+        if headers["X-Foo"] then
           ngx.log(ngx.ERR, 'Invalid Content-Type: ', ngx.var.http_content_type)
           ngx.status = 400
           ngx.print('invalid content-type')
@@ -738,7 +738,7 @@ GET /t
 --- request
 GET /t
 --- more_headers
-Content-Type: application/json
+X-Foo: application/json
 --- error_code: 200
 --- response_body
 {"token_type":"bearer","expires_in":123,"access_token":"token"}
@@ -916,7 +916,7 @@ body is necessary.
             credentials_location = "query",
             api_backend = "http://127.0.0.1:$TEST_NGINX_SERVER_PORT/api-backend/",
             proxy_rules = {
-              { pattern = '/', http_method = 'GET', metric_system_name = 'hits' }
+              { pattern = '/', http_method = 'GET', metric_system_name = 'hits', delta = 1 }
             }
           }
         }

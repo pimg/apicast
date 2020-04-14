@@ -26,6 +26,8 @@ Specifies the period (in seconds) that the configuration will be stored in the c
 - a positive number ( > 0 ): specifies the interval in seconds between configuration reload. For example, when APIcast is started with `APICAST_CONFIGURATION_CACHE=300` and `APICAST_CONFIGURATION_CACHE=boot`, it will load the configuration on boot, and will reload it every 5 minutes (300 seconds).
 - a negative number ( < 0 ): disables reloading. The cache entries will never be removed from the cache once stored, and the configuration will never be reloaded.
 
+This parameter is also used to store OpenID discovery configuration in the local cache, as the same behavior as described above.
+
 ### `APICAST_CONFIGURATION_LOADER`
 
 **Values:** boot | lazy  
@@ -50,6 +52,29 @@ Defines the name of the Lua module that implements custom logic overriding the e
 Double colon (`:`) separated list of environments (or paths) APIcast should load.
 It can be used instead of `-e` or `---environment` parameter on the CLI and for example
 stored in the container image as default environment. Any value passed on the CLI overrides this variable.
+
+### `APICAST_LOAD_SERVICES_WHEN_NEEDED`
+**Values:**
+- `true` or `1` for _true_
+- `false`, `0` or empty for _false_
+
+**Default:** _false_
+
+This option can be used when there are many services configured. However, its
+performance depends on additional factors such as the number of services, the
+latency between APIcast and the 3scale Admin Portal, the Time To Live (TTL) of
+the configuration, etc.
+
+By default, APIcast loads all the services each time it downloads its
+configuration from the Admin Portal. With a large number of services, this could
+become problematic. When this option is enabled, the configurations are loaded
+lazily. APIcast will only load the ones configured for the host specified in the
+host header of the request.
+
+Notes:
+- The caching defined by `APICAST_CONFIGURATION_CACHE` applies.
+- This option will be disabled when `APICAST_CONFIGURATION_LOADER` is `boot`.
+- Not compatible with `APICAST_PATH_ROUTING`.
 
 ### `APICAST_LOG_FILE`
 
@@ -187,7 +212,7 @@ before the client is throttled by adding latency.
 **Default:** \<empty\> (_false_)
 
 When set to _true_, APIcast will log the response code of the response returned by the API backend in 3scale. In some plans this information can later be consulted from the 3scale admin portal.
-Find more information about the Response Codes feature on the [3scale support site](https://access.redhat.com/documentation/en-us/red_hat_3scale/2.saas/html/analytics/response-codes-tracking).
+Find more information about the Response Codes feature on the [3scale support site](https://access.redhat.com/documentation/en-us/red_hat_3scale/2-saas/html-single/admin_portal_guide/index#response-codes-tracking).
 
 ### `APICAST_SERVICES_FILTER_BY_URL`
 **Value:** a PCRE (Perl Compatible Regular Expression)
@@ -241,9 +266,10 @@ This is the value that will be used in the nginx `worker_processes` [directive](
 
 ### `BACKEND_ENDPOINT_OVERRIDE`
 
-URI that overrides backend endpoint from the configuration. Useful when deploying outside OpenShift deployed AMP.
+URI that overrides the backend endpoint. By default, it is the external route. 
+This parameter is useful when deploying APIcast into the same OpenShift cluster than 3scale, as when using the internal hostname of the backend listener service instead of the public route. 
 
-**Example**: `https://backend.example.com`.
+**Example**: `http://backend-listener.<3scale-namespace>.svc.cluster.local:3000`
 
 ### `OPENSSL_VERIFY`
 
@@ -329,7 +355,7 @@ You can choose to mount a different configuration than the provided by default b
 
 **Example:** `/tmp/jaeger/jaeger.json`
 
-### `OPENTRACING_HEADER_FORWARD`
+### `OPENTRACING_FORWARD_HEADER`
 
 **Default:** `uber-trace-id`
 
@@ -408,3 +434,45 @@ The metrics that will have extended information are:
 - total_response_time_seconds: labels service_id and service_system_name
 - upstream_response_time_seconds: labels service_id and service_system_name
 - upstream_status: labels service_id and service_system_name
+
+### `HTTP_KEEPALIVE_TIMEOUT`
+
+**Default:** 75
+**Value:** positive integers
+**Example:** "1"
+
+This parameter sets a timeout during which a keep-alive client connection will
+stay open on the server side. The zero value disables keep-alive client
+connections.
+
+By default Gateway does not enable it, and the keepalive timeout on nginx is set
+to [75 seconds](http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout)
+
+
+### `APICAST_CACHE_STATUS_CODES`
+
+**Default:** 200 302
+**Value:** string
+
+When the response code from upstream matches one of the status codes defined in
+this environment variable, the response content will be cached in NGINX for the
+Headers cache time value, or the maximum time defined by
+`APICAST_CACHE_MAX_TIME` env variable.
+
+This parameter is only used by the services that are using content caching
+policy.
+
+### `APICAST_CACHE_MAX_TIME`
+
+**Default:** 1m
+**Value:** string
+
+When the response is selected to be cached in the system, the value of this
+variable indicates the maximum time to be cached. If cache-control header is not
+set, the time to be cached will be the defined one.
+
+The format for this value is defined by the [`proxy_cache_valid` NGINX
+directive](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_valid)
+
+This parameter is only used by the services that are using content caching
+policy.

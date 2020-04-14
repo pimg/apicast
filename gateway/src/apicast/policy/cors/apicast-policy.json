@@ -1,6 +1,6 @@
 {
-  "$schema": "http://apicast.io/policy-v1/schema#manifest#",
-  "name": "CORS",
+  "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+  "name": "CORS Request Handling",
   "summary": "Enables CORS (Cross Origin Resource Sharing) request handling.",
   "description":
     ["This policy enables Cross Origin Resource Sharing (CORS) request ",
@@ -9,6 +9,14 @@
      "When combined with the APIcast policy, the CORS policy should be ",
      "placed before it in the chain."],
   "version": "builtin",
+  "order": {
+    "before": [
+      {
+        "name": "apicast",
+        "version": "builtin"
+      }
+    ]
+  },
   "configuration": {
     "type": "object",
     "properties": {

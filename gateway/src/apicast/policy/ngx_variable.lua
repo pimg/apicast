@@ -5,10 +5,16 @@ local _M = {}
 local function context_values()
   return {
     uri = ngx.var.uri,
+    path = ngx.var.path,
     host = ngx.var.host,
     remote_addr = ngx.var.remote_addr,
+    remote_port = ngx.var.remote_port,
+    scheme = ngx.var.scheme,
+    server_addr = ngx.var.server_addr,
+    server_port = ngx.var.server_port,
     headers = ngx.req.get_headers(),
     http_method = ngx.req.get_method(),
+    request_id = ngx.var.request_id,
   }
 end
 

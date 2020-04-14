@@ -1,12 +1,14 @@
 local balancer = require('apicast.balancer')
+local errors = require('apicast.errors')
 
 local math = math
 local setmetatable = setmetatable
 local assert = assert
+local table_insert = table.insert
 
 local user_agent = require('apicast.user_agent')
 
-local _M = require('apicast.policy').new('APIcast', require('apicast.version'))
+local _M = require('apicast.policy').new('APIcast', 'builtin')
 
 local mt = {
   __index = _M
@@ -59,7 +61,11 @@ function _M:rewrite(context)
 
   local err
   context[self] = context[self] or {}
-  context[self].upstream, err = p.get_upstream(service)
+  context[self].upstream, err = p.get_upstream(service, context)
+  context.get_upstream = function()
+    return context[self].upstream
+  end
+
   if err then
     ngx.log(ngx.WARN, "upstream api for the service:", service.id, " is invalid, error:", err)
   end
@@ -97,14 +103,14 @@ function _M:access(context)
   local p = context and context.proxy or ctx.proxy or self.proxy
 
   if p then
-    return p:access(context.service, context.usage, context.credentials, context.ttl)
+    return p:access(context, context.service, context.usage, context.credentials, context.ttl)
   end
 end
 
 function _M:content(context)
   if not context[self].upstream then
     ngx.log(ngx.WARN, "Upstream server not found for this request")
-    return
+    return errors.upstream_not_found(context.service)
   end
 
   local upstream = assert(context[self].upstream, 'missing upstream')
@@ -112,6 +118,26 @@ function _M:content(context)
   if upstream then
     upstream:call(context)
   end
+end
+
+function _M:export()
+    return {
+        add_backend_auth_subscriber = function(context, handler)
+            if not context.backend_auth_subscribers then
+                context.backend_auth_subscribers = {}
+            end
+            table_insert(context.backend_auth_subscribers, handler)
+        end,
+        publish_backend_auth = function(context, response)
+            if not context.backend_auth_subscribers then
+                return
+            end
+
+            for _,handler in ipairs(context.backend_auth_subscribers) do
+                handler(context, response)
+            end
+        end
+    }
 end
 
 _M.balancer = balancer.call

@@ -112,7 +112,7 @@ location /transactions/authrep.xml {
     assert = require('luassert')
     assert.equal('https', ngx.var.scheme)
     assert.equal('$TEST_NGINX_RANDOM_PORT', ngx.var.server_port)
-    assert.equal('localhost', ngx.var.ssl_server_name)
+    assert.equal('test_backend', ngx.var.ssl_server_name)
   }
 
   content_by_lua_block {
@@ -168,5 +168,71 @@ location / {
 GET /bar?user_key=value
 --- response_body
 path: /foo/bar
+--- no_error_log
+[error]
+
+=== TEST 5: api backend  is not defined and return 404
+The request url is correct in the mapping rules but no api_backend is defined
+  and no routing policy matches.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "proxy": {
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+location /transactions/authrep.xml {
+    echo 'ok';
+}
+--- upstream
+location / {
+    echo 'path: $uri';
+}
+--- request
+GET /?user_key=value
+--- error_code: 404
+--- error_log
+could not find upstream for service: 42
+--- no_error_log
+[error]
+
+=== TEST 6: api backend  is null andreturns 404
+The request url is correct in the mapping rules but api_backend is null 
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "backend_version":  1,
+      "proxy": {
+        "api_backend": null,
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- backend
+location /transactions/authrep.xml {
+    echo 'ok';
+}
+--- upstream
+location / {
+    echo 'path: $uri';
+}
+--- request
+GET /?user_key=value
+--- error_code: 404
+--- error_log
+could not find upstream for service: 42
 --- no_error_log
 [error]

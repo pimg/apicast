@@ -13,6 +13,7 @@ local backend_cache_handler = require('apicast.backend.cache_handler')
 local Usage = require('apicast.usage')
 local errors = require('apicast.errors')
 local Upstream = require('apicast.upstream')
+local escape = require("resty.http.uri_escape")
 
 local assert = assert
 local type = type
@@ -90,21 +91,6 @@ local function output_debug_headers(service, usage, credentials)
   end
 end
 
--- Converts a usage to the format expected by the 3scale backend client.
-local function format_usage(usage)
-  local res = {}
-
-  local usage_metrics = usage.metrics
-  local usage_deltas = usage.deltas
-
-  for _, metric in ipairs(usage_metrics) do
-    local delta = usage_deltas[metric]
-    res['usage[' .. metric .. ']'] = delta
-  end
-
-  return res
-end
-
 local function matched_patterns(matched_rules)
   local patterns = {}
 
@@ -119,12 +105,12 @@ local function build_backend_client(self, service)
   return assert(backend_client:new(service, self.http_ng_backend), 'missing backend')
 end
 
-function _M:authorize(service, usage, credentials, ttl)
+function _M:authorize(context, service, usage, credentials, ttl)
   if not usage or not credentials then return nil, 'missing usage or credentials' end
 
-  local formatted_usage = format_usage(usage)
+  local formatted_usage = usage:format()
 
-  local encoded_usage = encode_args(formatted_usage)
+  local encoded_usage = usage:encoded_format()
   if encoded_usage == '' then
     return errors.no_match(service)
   end
@@ -156,7 +142,7 @@ function _M:authorize(service, usage, credentials, ttl)
     local res = backend:authrep(formatted_usage, credentials, self.extra_params_backend_authrep)
 
     local authorized, rejection_reason, retry_after = self:handle_backend_response(
-      cached_key, res, ttl
+      context, cached_key, res, ttl
     )
 
     if not authorized then
@@ -180,17 +166,19 @@ function _M.set_service(service)
   return service
 end
 
-function _M.get_upstream(service)
+function _M.get_upstream(service, context)
   service = service or ngx.ctx.service
 
   if not service then
     return errors.service_not_found()
   end
-
   local upstream, err = Upstream.new(service.api_backend)
-
   if not upstream then
     return nil, err
+  end
+
+  if context and context.upstream_location_name then
+    upstream.location_name = context.upstream_location_name
   end
 
   upstream:use_host_header(service.hostname_rewrite)
@@ -242,7 +230,12 @@ function _M:rewrite(service, context)
     return errors.no_credentials(service)
   end
 
-  local usage, matched_rules = service:get_usage(ngx.req.get_method(), ngx.var.uri)
+  -- URI need to be escaped to be able to match values with special characters
+  -- (like spaces), request_uri is the original one, but rewrite_uri can modify
+  -- the value and mapping rule will not match.
+  -- Example:  if URI is `/foo /bar` it will be translated to `/foo%20/bar`
+  local target_uri = escape.escape_uri(ngx.var.uri)
+  local usage, matched_rules = service:get_usage(ngx.req.get_method(), target_uri)
   local cached_key = { service.id }
 
   -- remove integer keys for serialization
@@ -267,6 +260,7 @@ function _M:rewrite(service, context)
   context.usage:merge(usage)
 
   ctx.usage = context.usage
+  ctx.matched_rules = matched_rules
   ctx.credentials = credentials
 
   var.cached_key = concat(cached_key, ':')
@@ -294,10 +288,17 @@ function _M:rewrite(service, context)
   context.credentials = ctx.credentials
 end
 
-function _M:access(service, usage, credentials, ttl)
+function _M:access(context)
   local ctx = ngx.ctx
+  local final_usage = context.usage
 
-  return self:authorize(service, usage or ctx.usage, credentials or ctx.credentials, ttl or ctx.ttl)
+  -- If routing policy changes the upstream and it only belongs to a specified
+  -- owner, we need to filter out the usage for APIs that are not used at all.
+  if context.route_upstream_usage_cleanup then
+    context:route_upstream_usage_cleanup(final_usage, ctx.matched_rules)
+  end
+
+  return self:authorize(context, context.service, final_usage, context.credentials, context.ttl)
 end
 
 local function response_codes_data(status)
@@ -308,7 +309,7 @@ local function response_codes_data(status)
   end
 end
 
-local function post_action(self, cached_key, service, credentials, formatted_usage, response_status_code)
+local function post_action(self, context, cached_key, service, credentials, formatted_usage, response_status_code)
   local backend = build_backend_client(self, service)
   local res = backend:authrep(
           formatted_usage,
@@ -317,7 +318,7 @@ local function post_action(self, cached_key, service, credentials, formatted_usa
           self.extra_params_backend_authrep
   )
 
-  self:handle_backend_response(cached_key, res)
+  self:handle_backend_response(context, cached_key, res)
 end
 
 function _M:post_action(context)
@@ -334,9 +335,9 @@ function _M:post_action(context)
   local service = ngx.ctx.service or self.configuration:find_by_id(service_id)
 
   local credentials = context.credentials
-  local formatted_usage = format_usage(context.usage)
+  local formatted_usage = context.usage:format()
 
-  reporting_executor:post(post_action, self, cached_key, service, credentials, formatted_usage, ngx.var.status)
+  reporting_executor:post(post_action, self, context, cached_key, service, credentials, formatted_usage, ngx.var.status)
 end
 
 -- Returns the rejection reason from the headers of a 3scale backend response.
@@ -355,14 +356,24 @@ local function limit_reset(response_headers)
   return response_headers and response_headers['3scale-limit-reset']
 end
 
+-- Returns the '3scale-limit-max-value' from the headers of a 3scale backend
+-- response.
+-- This header is set only when enabled via the '3scale-options' header of the
+-- request.
+local function limit_max_value(response_headers)
+  local max = response_headers and response_headers['3scale-limit-max-value']
+  return tonumber(max)
+end
+
 local function backend_is_unavailable(response_status)
   -- 499 is a non-standard error returned by NGINX (client closed request)
   return not response_status or response_status == 0 or response_status >= 499
 end
 
-function _M:handle_backend_response(cached_key, response, ttl)
+function _M:handle_backend_response(context, cached_key, response, ttl)
   ngx.log(ngx.DEBUG, '[backend] response status: ', response.status, ' body: ', response.body)
 
+  context:publish_backend_auth(response)
   self.cache_handler(self.cache, cached_key, response, ttl)
 
   if backend_is_unavailable(response.status) then
@@ -372,6 +383,17 @@ function _M:handle_backend_response(cached_key, response, ttl)
   local authorized = (response.status == 200)
   local unauthorized_reason = not authorized and rejection_reason(response.headers)
   local retry_after = not authorized and limit_reset(response.headers)
+  local limit_max = limit_max_value(response.headers)
+
+  -- This is for disabled metrics. Those have a limit of 0 in the 3scale
+  -- backend. When authorizing a disabled metric, backend returns "limits
+  -- exceeded" as the unauthorized reason. However, from the point of view of
+  -- APIcast, we want to distinguish between limits exceeded vs disabled
+  -- metric. That's why we reset the reason. The generic auth fail (403) will
+  -- be returned.
+  if limit_max == 0 and unauthorized_reason == 'limits_exceeded' then
+    unauthorized_reason = nil
+  end
 
   return authorized, unauthorized_reason, retry_after
 end
